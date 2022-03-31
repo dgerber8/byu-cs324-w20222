@@ -1,0 +1,70 @@
+1. Show the output from the ps command.
+USER         PID    PPID NLWP     LWP S CMD
+dgerber8  867088  866622    1  867088 S echoserveri
+2. From the ps output, how many processes and how many threads are running, and why? Use the PID and LWP to identify different threads or processes.
+1 thread id and 1 process id. This is happening because there is no concurrency on this server so only one can run at a time
+3. Enter Ctrl+c on the pane in which nc was first executed to interrupt it. What happens to the nc processes in the other windows?
+When the current running process is terminated, the next process that was run and was waiting executes meaning it connects to the server and the server echoes its message
+4. Show the output from the ps command.
+USER         PID    PPID NLWP     LWP S CMD
+dgerber8  869371  866622    1  869371 S echoserverp
+dgerber8  869455  869371    1  869455 S echoserverp
+dgerber8  869490  869371    1  869490 S echoserverp
+dgerber8  869577  869371    1  869577 S echoserverp
+5. From the ps output, how many processes and how many threads are running, and why? Use the PID and LWP to identify different threads or processes.
+4 process ids and 4 thread ids. This is because each process is running concurrently and each have their own thread id. The 4th one is the main process.
+6. Show the output from the ps command.
+USER         PID    PPID NLWP     LWP S CMD
+dgerber8  870159  866622    4  870159 S echoservert
+dgerber8  870159  866622    4  870201 S echoservert
+dgerber8  870159  866622    4  870221 S echoservert
+dgerber8  870159  866622    4  870243 S echoservert
+ 
+7. From the ps output, how many processes and how many threads are running, and why? Use the PID and LWP to identify different threads or processes.
+There is 1 process id and 4 thread ids. This is because the main process is creating a thread for each client. The 4th thread id is the thread id of the main thread
+8. Show the output from the ps command.
+USER         PID    PPID NLWP     LWP S CMD
+dgerber8  883055  866622    9  883055 S echoservert_pre
+dgerber8  883055  866622    9  883056 S echoservert_pre
+dgerber8  883055  866622    9  883057 S echoservert_pre
+dgerber8  883055  866622    9  883058 S echoservert_pre
+dgerber8  883055  866622    9  883059 S echoservert_pre
+dgerber8  883055  866622    9  883060 S echoservert_pre
+dgerber8  883055  866622    9  883061 S echoservert_pre
+dgerber8  883055  866622    9  883062 S echoservert_pre
+dgerber8  883055  866622    9  883063 S echoservert_pre
+9. From the ps output, how many processes and how many threads are running, and why? Use the PID and LWP to identify different threads or processes.
+There is 1 process id and 9 thread ids. This is because our thread pool is set as 8 in our code. This means that there are 8 threads ready and waiting to accept items from the queue. When an item on the queue is to be processed, it gets assigned to any of the available threads. The 9th thread is main.
+10. How many producer threads are running?
+1
+11. How many consumer threads are running?
+8
+12. What is the producer thread waiting on?
+It is waiting on a client to initiate a connection
+13. What are the consumer threads waiting on?
+They are waiting on the items semaphore to be a value greater than zero
+14. What event changes the state of the producer (i.e., so it is no longer waiting)?
+Doing the nc command in one of the client panes on the waiting port to initiate a connection
+15. What event changes the state of the consumer(s)?
+The post(items) call
+16. How many consumers change state?
+1
+17. What event changes the state of the consumer(s)? (this question was accidentally a repeat of 15 :))
+The post(items) call
+18. What is the producer thread now waiting on?
+For another connection to be established
+19. Rank the terms in decreasing (most expensive to least expensive) order of run-time cost for handling a given client.
+ 
+Process-based, thread-based with spawning threads on-the-fly, threadpool-based
+ 
+20. Which (one or more) of the three, as implemented in this assignment, has/have an explicit limitation in terms of number of clients that can be handled concurrently?
+ 
+Thread-pool based. Only 8 at a time. Also process based which can only do one at a time.
+ 
+21. Which (one or more) of the three of the models allow(s) allow sharing of memory and data structures without the use of inter-process communication (e.g., pipes, sockets)?
+ 
+Both thread-pool based and threads on the fly
+ 
+22. Which (one or more) of the three of the models seems to be the least complex to implement?
+ 
+Thread-pool based

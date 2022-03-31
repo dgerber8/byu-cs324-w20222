@@ -1,0 +1,174 @@
+1:
+
+Exec.c starts the program by printing out its own pid and program name. It then sleeps for a while. After its done sl;eeping, it checks if there are any passed in arguments to the program. If not, it prints that there are no programs to run and exits with code 0. If so, prints that it is running the file inputted in argv[1] and runs execve to execute the code specified in argv[1] while keeping details such as the pid and file descriptors. When it does this successfully, the rest of the parent code after the call is thrown away. Lastly it prints that the parent program is finished running (Though since this print is after the execve call, the program usually won’t actually reach it)
+
+2:
+
+The last print statement will only execute when execve isn’t successful (ex: the filename doesn’t exist)
+
+3:
+
+Commands:
+./exec /bin/cat
+Output:
+Program "./exec" has pid 3043103. Sleeping.
+Running exec of "/bin/cat"
+
+4:
+
+Commands:
+ps -p 3043103 -o user,pid,ppid,state,ucmd
+Output Before:
+USER         PID    PPID S CMD
+dgerber8 3043103 3038041 S exec
+Output After:
+USER         PID    PPID S CMD
+dgerber8 3043103 3038041 S cat
+
+5:
+
+The pid, ppid, and state fields remain the same while the ucmd field changes. This illustrates how execve works because when it’s called after 30 seconds, execve replaces the parent code with new code but keeps these variables the same. Aka its kind of inheriting this process and changing its code more than its starting a new process entirely
+
+6:
+
+Commands:
+./exec /sssss
+Output:
+Running exec of "/sssss"                                                              │
+End of program "./exec".
+Explanation:
+This output is produced because execve doesn’t finish successfully (due to the non-existent program argument). This is the only condition in which that last print statement actually executes and doesn’t just get thrown away.
+
+7:
+
+fork.c has the following behavior: It starts by instantiating a pid int variable and prints that the program is starting with the program’s pid. Next, it sets pid to fork() and if pid is -1 (ie: <0), it prints that the split was unsuccessful and exits with code 1. Next it prints “Section A” followed by the current pid and sleeps for 30 seconds. Then, it splits into parent and child processes (by checking the pid). In the child process (pid == 0), It prints “Section B”, sleeps for 30 seconds then prints that section B i9s done sleeping. In the parent process (else), it prints “Section C”, sleeps for 30 seconds twice in a row, then prints that it is done sleeping and exits with code 0. Lastly, it prints Section D and sleeps for another 30 seconds.
+
+8:
+
+Parent: A,C
+Child: A,B
+
+9:
+
+Commands:
+ps --forest -p 3071501 -o user,pid,ppid,state,ucmd
+ps --forest -p 3071502 -o user,pid,ppid,state,ucmd
+Outputs (Respectively):
+1st Time:
+USER         PID    PPID S CMD
+dgerber8 3071501 3038041 S fork
+USER         PID    PPID S CMD
+dgerber8 3071502 3071501 S fork
+2nd Time:
+USER         PID    PPID S CMD
+dgerber8 3071501 3038041 S fork
+USER         PID    PPID S CMD
+dgerber8 3071502 3071501 S fork
+3rd time:
+USER         PID    PPID S CMD
+dgerber8 3071501 3038041 S fork
+USER         PID    PPID S CMD
+dgerber8 3071502 3071501 Z fork <defunct>
+
+10:
+
+The PID, PPID and ucmd for both processes stay consistent throughout the runtime. The state of the parent process also remains consistent. The one difference is that after “Section B is done sleeping”, the state of the child process changes to Zombie (Z). This is because the child process finished before the parent process. 
+
+11:
+
+I would add a wait() call. The most appropriate place to put that is in the parent process(else) at the very beginning before the prints and sleeps
+
+12: 
+
+Commands:
+ps --forest -p 3078185 -o user,pid,ppid,state,ucmd
+ps --forest -p 3078186 -o user,pid,ppid,state,ucmd
+Outputs(Respectively):
+First 2 times:
+USER         PID    PPID S CMD
+dgerber8 3078185 3077083 S fork
+USER         PID    PPID S CMD
+dgerber8 3078186 3078185 S fork
+3rd time:
+USER         PID    PPID S CMD
+dgerber8 3078185 3077083 S fork
+USER         PID    PPID S CMD
+
+
+13:
+
+The difference with this iteration is that due to the wait call, the parent reaps the resources of the child instead of it entering a zombie state. That’s why nothing shows up for the child process on the third round of ps calls
+
+14:
+
+Commands:
+ps --forest -p 3080457 -o user,pid,ppid,state,ucmd
+ps --forest -p 3080458 -o user,pid,ppid,state,ucmd
+Outputs(Respectively(:
+1st Time:
+USER         PID    PPID S CMD
+dgerber8 3080457 3077083 S fork
+USER         PID    PPID S CMD
+dgerber8 3080458 3080457 S fork
+2nd time:
+USER         PID    PPID S CMD
+USER         PID    PPID S CMD
+dgerber8 3080458       1 S fork
+
+15:
+
+This time, after “Section C is done sleeping prints”, the parent process appears blank and the child process shows a PPID of 1. This is because since the child process now sleeps for longer, the parent process finishes first. When the parent process finishes first, the child process gets “adopted” bit the init process (PPID 1) and the resources for the original parent get reaped.
+
+16:
+
+File Contents:
+BEFORE FORK
+SECTION A
+SECTION A
+SECTION B
+SECTION C
+
+17:
+
+The order in which the print statements happen is AABC. This makes sense because since I have a wait() call in my parent function, befor the section C print, I know that no matter what, both the child’s section A and Section B prints to the file happen before the parent’s section C print. This makes sense because wait() halts the parent completely until the child process is fully finished
+
+18:
+
+Output:
+Starting program; process has pid 3097406
+Section A;  pid 3097406
+Section A;  pid 3097407
+Section B
+Section C
+Hello from section B
+
+19:
+
+Output:
+Starting program; process has pid 3098828
+Section A;  pid 3098828
+Section A;  pid 3098829
+Section B
+Program "./fork" has pid 3098829. Sleeping.
+Running exec of "/bin/cat"
+foobar
+Section C
+
+20:
+
+Output:
+Starting program; process has pid 3100196
+Section A;  pid 3100196
+Section A;  pid 3100197
+Section B
+Program "./fork" has pid 3100197. Sleeping.
+Running exec of "/bin/cat"
+Section C
+Fork-output.txt:
+BEFORE FORK
+SECTION A
+SECTION A
+SECTION B
+foobar
+SECTION C
+
